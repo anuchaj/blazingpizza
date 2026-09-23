@@ -1,0 +1,99 @@
+@page "/myorders/{orderId:int}"
+@implements IDisposable
+@using System.Threading
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<PageTitle>Blazing Pizza - Order Details</PageTitle>
+
+<div class="main">
+    @if (invalidOrder)
+    {
+        <h2>Order not found</h2>
+        <p>We're sorry but this order could not be loaded.</p>
+        <a class="btn btn-success" href="myorders">Back to my orders</a>
+    }
+    else if (orderWithStatus is null)
+    {
+        <text>Loading...</text>
+    }
+    else
+    {
+        <div class="track-order">
+            <div class="track-order-title">
+                <h2>Order placed @orderWithStatus.Order.CreatedTime.ToLongDateString()</h2>
+                <p class="ml-auto mb-0">
+                    Status: <strong>@orderWithStatus.StatusText</strong>
+                </p>
+            </div>
+            <div class="track-order-body">
+                <div class="track-order-details">
+                    <OrderReview Order="orderWithStatus.Order" />
+                    <a class="btn btn-secondary" href="myorders">Back to my orders</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+
+    OrderWithStatus orderWithStatus;
+    bool invalidOrder;
+    CancellationTokenSource pollingCancellationToken;
+
+    protected override void OnParametersSet()
+    {
+        pollingCancellationToken?.Cancel();
+        PollForUpdates();
+    }
+
+    private async void PollForUpdates()
+    {
+        pollingCancellationToken = new CancellationTokenSource();
+        var token = pollingCancellationToken.Token;
+
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                invalidOrder = false;
+                orderWithStatus = await HttpClient.GetFromJsonAsync<OrderWithStatus>(NavigationManager.BaseUri + $"orders/{OrderId}");
+
+                if (orderWithStatus is null)
+                {
+                    throw new InvalidOperationException("The order could not be loaded.");
+                }
+
+                await InvokeAsync(StateHasChanged);
+
+                if (orderWithStatus.IsDelivered)
+                {
+                    pollingCancellationToken.Cancel();
+                }
+                else
+                {
+                    await Task.Delay(4000, token);
+                }
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                invalidOrder = true;
+                pollingCancellationToken.Cancel();
+                Console.Error.WriteLine(ex);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        pollingCancellationToken?.Cancel();
+        pollingCancellationToken?.Dispose();
+    }
+}

@@ -1,14 +1,12 @@
-using BlazingPizza.Data;
-using BlazingPizza.Services;
+using BlazingPizza;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-
+builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddSqlite<PizzaStoreContext>("Data Source=pizza.db");
-
 builder.Services.AddScoped<OrderState>();
 
 var app = builder.Build();
@@ -18,15 +16,13 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
 }
 
-
 app.UseStaticFiles();
 app.UseRouting();
 
 app.MapRazorPages();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
-
-app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
+app.MapControllers();
 
 // Initialize the database
 var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
@@ -39,4 +35,6 @@ using (var scope = scopeFactory.CreateScope())
     }
 }
 
+
 app.Run();
+

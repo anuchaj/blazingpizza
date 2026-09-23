@@ -1,0 +1,77 @@
+@page "/checkout"
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject OrderState OrderState
+
+<div class="main">
+    <div class="checkout-cols">
+        <div class="checkout-order-details">
+            <h2>Review order</h2>
+            @foreach (var pizza in Order.Pizzas)
+            {
+                <p>
+                    <strong>
+                        @(pizza.Size)" @pizza.Special?.Name (₦@pizza.GetFormattedTotalPrice())
+                    </strong>
+                </p>
+            }
+
+            <p>
+                <strong>
+                    Total price: ₦@Order.GetFormattedTotalPrice()
+                </strong>
+            </p>
+        </div>
+
+        <div class="checkout-delivery-address">
+            <h2>Delivery address</h2>
+            <EditForm Model="Order.DeliveryAddress" OnValidSubmit="PlaceOrder">
+                <DataAnnotationsValidator />
+                <div class="form-group">
+                    <label>Name</label>
+                    <InputText class="form-control" @bind-Value="Order.DeliveryAddress.Name" />
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <InputText class="form-control" @bind-Value="Order.DeliveryAddress.Line1" />
+                </div>
+                <div class="form-group">
+                    <label>City</label>
+                    <InputText class="form-control" @bind-Value="Order.DeliveryAddress.City" />
+                </div>
+                <div class="form-group">
+                    <label>Region</label>
+                    <InputText class="form-control" @bind-Value="Order.DeliveryAddress.Region" />
+                </div>
+                <div class="form-group">
+                    <label>Postal Code</label>
+                    <InputText class="form-control" @bind-Value="Order.DeliveryAddress.PostalCode" />
+                </div>
+
+                <button class="checkout-button btn btn-warning" type="submit" disabled="@isSubmitting">
+                    Place order
+                </button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    Order Order => OrderState.Order;
+    bool isSubmitting;
+
+    async Task PlaceOrder()
+    {
+        isSubmitting = true;
+
+        Order.UserId = "guest";
+        Order.CreatedTime = DateTime.Now;
+
+        var response = await HttpClient.PostAsJsonAsync(NavigationManager.BaseUri + "orders", OrderState.Order);
+        response.EnsureSuccessStatusCode();
+
+        var newOrderId = await response.Content.ReadFromJsonAsync<int>();
+        OrderState.ResetOrder();
+        NavigationManager.NavigateTo($"myorders/{newOrderId}");
+    }
+}

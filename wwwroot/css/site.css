@@ -1,4 +1,4 @@
-﻿@import url('font/quicksand.css');
+@import url('font/quicksand.css');
 
 body, html {
     height: 100%;
@@ -8,7 +8,7 @@ body {
     padding-top: 5rem;
     flex-direction: column;
     font-family: 'quicksand';
-    overflow-y: hidden;
+    overflow-y: auto;
 }
 
 form {
@@ -46,7 +46,7 @@ form {
 
 .content {
     display: flex;
-    height: 100%;
+    min-height: calc(100vh - 8rem);
     z-index: 1;
     background-color: white;
 }
@@ -199,7 +199,7 @@ form {
     }
 
 .price::before {
-    content: '£';
+    content: '₦';
     font-weight: 300;
     font-size: 1.2rem;
     margin-right: 0.2rem;
@@ -251,7 +251,7 @@ form {
     }
 
         .order-total .total-price::before {
-            content: '£';
+            content: '₦';
             font-weight: 300;
             margin: 0 0.1rem 0 0.4rem;
         }
@@ -308,7 +308,7 @@ form {
 }
 
     .item-price::before {
-        content: '£';
+        content: '₦';
         font-weight: 100;
         margin-right: 0.3rem;
     }
@@ -455,7 +455,7 @@ form {
 }
 
 .dialog .topping-price::before {
-    content: '£';
+    content: '₦';
 }
 
 .delete-topping {
@@ -755,4 +755,11 @@ input[type=range] {
     100% {
         transform: translateX(500px);
     }
+}
+footer {
+    background-color: #2b2b2b;
+    color: #fff2cc;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    flex-shrink: 0;
 }
